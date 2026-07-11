@@ -9,7 +9,7 @@ import {
   sortLeaderboard,
   validateGuess
 } from "./engine";
-import { difficulties } from "./config";
+import { difficulties, formatCountdown } from "./config";
 
 describe("game engine", () => {
   it("counts exact positional matches only", () => {
@@ -58,5 +58,10 @@ describe("game engine", () => {
     expect(isStageUnlocked(1, new Set())).toBe(true);
     expect(isStageUnlocked(2, new Set())).toBe(false);
     expect(isStageUnlocked(2, new Set([1]))).toBe(true);
+  });
+
+  it("formats daily countdowns with hours", () => {
+    expect(formatCountdown(10 * 60 * 60 * 1000 + 10 * 60 * 1000 + 1000)).toBe("10:10:01");
+    expect(formatCountdown(10 * 60 * 1000 + 1000)).toBe("10:01");
   });
 });

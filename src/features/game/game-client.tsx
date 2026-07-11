@@ -3,7 +3,7 @@
 import { useEffect, useMemo, useState } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import { Check, Clock, RotateCcw, Sparkles } from "lucide-react";
-import { difficulties, formatDuration } from "./config";
+import { difficulties, formatCountdown, formatDuration } from "./config";
 import { themes } from "./themes";
 import type { Difficulty, GameSessionView, ThemeId } from "./types";
 import { usePlayer } from "@/features/profile/player-context";
@@ -198,7 +198,7 @@ export function GameClient() {
         {session.gameType === "daily" ? (
           <div className="mt-4 flex items-center gap-2 rounded-2xl bg-mint/25 px-4 py-3 font-bold text-ink">
             <Clock size={18} aria-hidden />
-            Next puzzle in {formatDuration(dailyCountdown)}
+            Next puzzle in {formatCountdown(dailyCountdown)}
           </div>
         ) : null}
       </section>
