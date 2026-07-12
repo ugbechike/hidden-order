@@ -5,5 +5,9 @@ export function toApiErrorMessage(error: unknown, fallback: string) {
     return "Supabase tables are missing. Run the SQL migration in supabase/migrations/20260711120000_initial_schema.sql, then redeploy or refresh.";
   }
 
+  if (message.includes("invalid input syntax for type uuid") && message.includes("local-player")) {
+    return "Supabase anonymous authentication is not active. Enable anonymous sign-ins in Supabase Auth settings, then refresh the app.";
+  }
+
   return message;
 }

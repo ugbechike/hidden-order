@@ -16,6 +16,12 @@ export async function getPlayer(request: Request): Promise<Player> {
       const displayName = data.user.user_metadata.display_name || "Player";
       return { id: data.user.id, displayName };
     }
+
+    throw new Error("Supabase anonymous authentication failed. Enable anonymous sign-ins in Supabase Auth, then refresh the app.");
+  }
+
+  if (admin) {
+    throw new Error("Supabase anonymous authentication is not active in this browser session. Enable anonymous sign-ins in Supabase Auth, then refresh the app.");
   }
 
   const fallbackId = request.headers.get("x-player-id") || "local-player";

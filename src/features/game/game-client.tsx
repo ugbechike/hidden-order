@@ -24,7 +24,7 @@ function swap(items: string[], first: number, second: number) {
 export function GameClient() {
   const router = useRouter();
   const searchParams = useSearchParams();
-  const { ready, headers } = usePlayer();
+  const { ready, headers, authError } = usePlayer();
   const [session, setSession] = useState<GameSessionView | null>(null);
   const [arrangement, setArrangement] = useState<string[]>([]);
   const [selected, setSelected] = useState<number | null>(null);
@@ -41,7 +41,13 @@ export function GameClient() {
   const stageNumber = Number(searchParams.get("stage") ?? "1");
 
   useEffect(() => {
-    if (!ready) return;
+    if (!ready || authError) {
+      if (authError) {
+        setError(authError);
+        setLoading(false);
+      }
+      return;
+    }
     let alive = true;
     async function start() {
       setLoading(true);
@@ -70,7 +76,7 @@ export function GameClient() {
     return () => {
       alive = false;
     };
-  }, [headers, mode, practiceDifficulty, practiceTheme, ready, stageNumber, timerEnabled]);
+  }, [authError, headers, mode, practiceDifficulty, practiceTheme, ready, stageNumber, timerEnabled]);
 
   useEffect(() => {
     if (!session || session.status === "completed" || (!timerEnabled && session.gameType === "practice")) return;

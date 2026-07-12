@@ -39,3 +39,5 @@ pnpm lint
 ## Deployment
 
 Deploy to Vercel with the environment variables from `.env.example`. Supabase anonymous auth must be enabled for production play.
+
+In Supabase, enable anonymous sign-ins under Authentication settings before testing the deployed app. If anonymous auth is off, the app cannot create a valid player UUID for saved sessions and progress.

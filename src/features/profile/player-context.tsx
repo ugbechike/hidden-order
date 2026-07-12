@@ -7,6 +7,7 @@ type PlayerContextValue = {
   ready: boolean;
   playerId: string;
   displayName: string;
+  authError?: string;
   token?: string;
   headers: HeadersInit;
   setDisplayName: (name: string) => void;
@@ -27,6 +28,7 @@ export function PlayerProvider({ children }: { children: React.ReactNode }) {
   const [playerId, setPlayerId] = useState("");
   const [displayName, setDisplayNameState] = useState("");
   const [token, setToken] = useState<string | undefined>();
+  const [authError, setAuthError] = useState<string | undefined>();
 
   useEffect(() => {
     let alive = true;
@@ -34,12 +36,21 @@ export function PlayerProvider({ children }: { children: React.ReactNode }) {
       const savedName = localStorage.getItem("hidden-order-display-name") || "";
       const supabase = createClient();
       if (supabase) {
-        const { data: sessionData } = await supabase.auth.getSession();
+        setAuthError(undefined);
+        const { data: sessionData, error: sessionError } = await supabase.auth.getSession();
+        if (sessionError) {
+          setAuthError(sessionError.message);
+        }
         let session = sessionData.session;
         if (!session) {
-          const { data } = await supabase.auth.signInAnonymously({
+          const { data, error } = await supabase.auth.signInAnonymously({
             options: { data: { display_name: savedName || "Player" } }
           });
+          if (error) {
+            setAuthError(
+              `${error.message}. Enable anonymous sign-ins in Supabase Auth settings, then refresh the app.`
+            );
+          }
           session = data.session;
         }
         if (alive && session?.user) {
@@ -74,11 +85,12 @@ export function PlayerProvider({ children }: { children: React.ReactNode }) {
       ready,
       playerId,
       displayName,
+      authError,
       token,
       headers: requestHeaders,
       setDisplayName
     };
-  }, [displayName, playerId, ready, token]);
+  }, [authError, displayName, playerId, ready, token]);
 
   return <PlayerContext.Provider value={value}>{children}</PlayerContext.Provider>;
 }
@@ -90,14 +102,14 @@ export function usePlayer() {
 }
 
 export function DisplayNameGate() {
-  const { ready, displayName, setDisplayName } = usePlayer();
+  const { ready, displayName, authError, setDisplayName } = usePlayer();
   const [draft, setDraft] = useState(displayName === "Player" ? "" : displayName);
 
   useEffect(() => {
     if (displayName !== "Player") setDraft(displayName);
   }, [displayName]);
 
-  if (!ready || displayName !== "Player") return null;
+  if (!ready || authError || displayName !== "Player") return null;
 
   return (
     <div className="fixed inset-0 z-50 grid place-items-center bg-ink/45 p-5 backdrop-blur-sm">
