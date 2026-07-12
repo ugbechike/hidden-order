@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
 import { z } from "zod";
 import { getPlayer } from "@/lib/server/auth";
+import { toApiErrorMessage } from "@/lib/server/errors";
 import { submitGuess } from "@/lib/server/store";
 
 const schema = z.object({
@@ -15,6 +16,6 @@ export async function POST(request: Request) {
     const session = await submitGuess(player, input.sessionId, input.arrangement);
     return NextResponse.json({ session });
   } catch (error) {
-    return NextResponse.json({ error: error instanceof Error ? error.message : "Unable to submit guess." }, { status: 400 });
+    return NextResponse.json({ error: toApiErrorMessage(error, "Unable to submit guess.") }, { status: 400 });
   }
 }

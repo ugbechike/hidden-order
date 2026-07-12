@@ -1,5 +1,6 @@
 import { NextResponse } from "next/server";
 import { getPlayer } from "@/lib/server/auth";
+import { toApiErrorMessage } from "@/lib/server/errors";
 import { getSession } from "@/lib/server/store";
 
 export async function GET(request: Request) {
@@ -11,6 +12,6 @@ export async function GET(request: Request) {
     const session = await getSession(player, sessionId);
     return NextResponse.json({ session });
   } catch (error) {
-    return NextResponse.json({ error: error instanceof Error ? error.message : "Unable to load game." }, { status: 400 });
+    return NextResponse.json({ error: toApiErrorMessage(error, "Unable to load game.") }, { status: 400 });
   }
 }

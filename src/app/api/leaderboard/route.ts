@@ -1,5 +1,6 @@
 import { NextResponse } from "next/server";
 import { getPlayer } from "@/lib/server/auth";
+import { toApiErrorMessage } from "@/lib/server/errors";
 import { loadLeaderboard } from "@/lib/server/store";
 
 export async function GET(request: Request) {
@@ -10,6 +11,6 @@ export async function GET(request: Request) {
     const entries = await loadLeaderboard(player, { stageId });
     return NextResponse.json({ entries });
   } catch (error) {
-    return NextResponse.json({ error: error instanceof Error ? error.message : "Unable to load leaderboard." }, { status: 400 });
+    return NextResponse.json({ error: toApiErrorMessage(error, "Unable to load leaderboard.") }, { status: 400 });
   }
 }

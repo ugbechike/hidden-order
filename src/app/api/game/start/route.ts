@@ -3,6 +3,7 @@ import { z } from "zod";
 import { difficulties } from "@/features/game/config";
 import { themes } from "@/features/game/themes";
 import { getPlayer } from "@/lib/server/auth";
+import { toApiErrorMessage } from "@/lib/server/errors";
 import { startGame } from "@/lib/server/store";
 
 const schema = z.object({
@@ -20,6 +21,6 @@ export async function POST(request: Request) {
     const session = await startGame(player, input);
     return NextResponse.json({ session });
   } catch (error) {
-    return NextResponse.json({ error: error instanceof Error ? error.message : "Unable to start game." }, { status: 400 });
+    return NextResponse.json({ error: toApiErrorMessage(error, "Unable to start game.") }, { status: 400 });
   }
 }
