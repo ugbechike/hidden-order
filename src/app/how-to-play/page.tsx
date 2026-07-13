@@ -6,7 +6,7 @@ export default function HowToPlayPage() {
     <main className="grid gap-4">
       <section className="rounded-[30px] bg-mint p-6 text-ink shadow-pop">
         <p className="text-sm font-black uppercase tracking-wide text-ink/60">How to Play</p>
-        <h1 className="text-4xl font-black">Swap, submit, deduce.</h1>
+        <h1 className="text-4xl font-black">Place, submit, deduce.</h1>
       </section>
 
       <section className="rounded-[30px] bg-white/85 p-5 shadow-soft">
@@ -17,8 +17,8 @@ export default function HowToPlayPage() {
       </section>
 
       <section className="rounded-[30px] bg-white/85 p-5 text-lg font-bold leading-relaxed shadow-soft">
-        <p>Tap one object, then tap another to swap them. Submit your arrangement to learn only the total number of correct positions.</p>
-        <p className="mt-3">Use the history to compare totals. The game never marks which individual positions are correct.</p>
+        <p>Tap an available object, then tap a guess slot to place it. Fill every slot and submit your guess.</p>
+        <p className="mt-3">Use your attempts to compare totals. The game never marks which individual positions are correct.</p>
       </section>
     </main>
   );

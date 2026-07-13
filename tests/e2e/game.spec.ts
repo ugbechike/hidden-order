@@ -7,19 +7,17 @@ async function enterName(page: import("@playwright/test").Page) {
   await page.getByRole("button", { name: "Start playing" }).click();
 }
 
-async function arrange(page: import("@playwright/test").Page, target: string[]) {
-  for (let index = 0; index < target.length; index += 1) {
-    const currentIds = await page.locator("[data-item-id]").evaluateAll((nodes) => nodes.map((node) => node.getAttribute("data-item-id")));
-    if (currentIds[index] === target[index]) continue;
-    const swapIndex = currentIds.indexOf(target[index]);
-    await page.locator("[data-item-id]").nth(index).click({ force: true });
-    await page.locator("[data-item-id]").nth(swapIndex).click({ force: true });
+async function fillGuess(page: import("@playwright/test").Page, target: string[]) {
+  await expect(page.locator("[data-object-id]").first()).toBeVisible();
+  for (const [index, id] of target.entries()) {
+    await page.locator(`[data-object-id="${id}"]`).click({ force: true });
+    await page.locator(`[data-guess-slot="${index}"]`).click({ force: true });
   }
 }
 
 async function solveCurrentPuzzle(page: import("@playwright/test").Page, solution: string[]) {
-  await arrange(page, solution);
-  await page.getByRole("button", { name: /Check Arrangement/i }).click({ force: true });
+  await fillGuess(page, solution);
+  await page.getByRole("button", { name: /Submit Guess/i }).click({ force: true });
   await expect(page).toHaveURL(/\/results/);
 }
 
@@ -34,10 +32,11 @@ test("starts and completes a stage", async ({ page }) => {
 test("records guesses and shows leaderboard", async ({ page }) => {
   await enterName(page);
   await page.goto("/game?mode=stage&stage=1");
-  await page.locator("[data-item-id]").nth(0).click();
-  await page.locator("[data-item-id]").nth(1).click();
-  await page.getByRole("button", { name: /Check Arrangement/i }).click();
-  await expect(page.getByText(/Previous guesses/i)).toBeVisible();
+  const solution = buildStageDefinition(1).solution;
+  await fillGuess(page, [...solution.slice(1), solution[0]]);
+  await expect(page.getByRole("button", { name: /Submit Guess/i })).toBeEnabled();
+  await page.getByRole("button", { name: /Submit Guess/i }).click();
+  await expect(page.getByRole("heading", { name: "Attempts" })).toBeVisible();
   await page.goto("/leaderboard");
   await expect(page.getByRole("heading", { name: "Fewest guesses wins." })).toBeVisible();
 });

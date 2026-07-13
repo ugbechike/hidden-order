@@ -14,7 +14,14 @@ export async function POST(request: Request) {
     const player = await getPlayer(request);
     const input = schema.parse(await request.json());
     const session = await submitGuess(player, input.sessionId, input.arrangement);
-    return NextResponse.json({ session });
+    const latestGuess = session.guesses.at(-1);
+    return NextResponse.json({
+      result: {
+        correctPositions: latestGuess?.correctPositions ?? 0,
+        attemptNumber: session.attemptCount,
+        completed: session.status === "completed"
+      }
+    });
   } catch (error) {
     return NextResponse.json({ error: toApiErrorMessage(error, "Unable to submit guess.") }, { status: 400 });
   }
