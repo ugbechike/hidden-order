@@ -76,7 +76,8 @@ export function sortLeaderboard<T extends { attemptCount: number; durationMs: nu
 }
 
 export function isStageUnlocked(stageNumber: number, completedStages: Set<number>) {
-  return stageNumber === 1 || completedStages.has(stageNumber - 1);
+  const isDifficultyEntryStage = (stageNumber - 1) % 5 === 0;
+  return isDifficultyEntryStage || completedStages.has(stageNumber - 1);
 }
 
 export function buildStageDefinition(stageNumber: number) {

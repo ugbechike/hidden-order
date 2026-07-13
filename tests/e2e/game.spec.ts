@@ -46,6 +46,15 @@ test("records guesses and shows leaderboard", async ({ page }) => {
   await expect(page.getByRole("heading", { name: "Fewest guesses wins." })).toBeVisible();
 });
 
+test("unlocks the first stage of every difficulty", async ({ page }) => {
+  await enterName(page);
+  await page.goto("/stages");
+  for (const stageNumber of [1, 6, 11, 16, 21, 26, 31, 36]) {
+    await expect(page.locator(`a[href="/game?mode=stage&stage=${stageNumber}"]`)).toBeVisible();
+  }
+  await expect(page.locator('a[href="/game?mode=stage&stage=7"]')).toHaveCount(0);
+});
+
 test("completes the daily puzzle", async ({ page }) => {
   await enterName(page);
   await page.goto("/game?mode=daily");

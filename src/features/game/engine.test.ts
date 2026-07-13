@@ -54,10 +54,19 @@ describe("game engine", () => {
     expect(validateGuess(["a", "b", "c"], ["a", "b", "c"]).valid).toBe(true);
   });
 
-  it("unlocks the next stage only after the previous stage is complete", () => {
+  it("unlocks each difficulty entry stage and then gates within that difficulty", () => {
     expect(isStageUnlocked(1, new Set())).toBe(true);
+    expect(isStageUnlocked(6, new Set())).toBe(true);
+    expect(isStageUnlocked(11, new Set())).toBe(true);
+    expect(isStageUnlocked(16, new Set())).toBe(true);
+    expect(isStageUnlocked(21, new Set())).toBe(true);
+    expect(isStageUnlocked(26, new Set())).toBe(true);
+    expect(isStageUnlocked(31, new Set())).toBe(true);
+    expect(isStageUnlocked(36, new Set())).toBe(true);
     expect(isStageUnlocked(2, new Set())).toBe(false);
+    expect(isStageUnlocked(7, new Set())).toBe(false);
     expect(isStageUnlocked(2, new Set([1]))).toBe(true);
+    expect(isStageUnlocked(7, new Set([6]))).toBe(true);
   });
 
   it("formats daily countdowns with hours", () => {
