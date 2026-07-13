@@ -1,7 +1,8 @@
 "use client";
 
 import { useEffect, useMemo, useState } from "react";
-import { useRouter, useSearchParams } from "next/navigation";
+import Link from "next/link";
+import { useSearchParams } from "next/navigation";
 import { Check, Clock, RotateCcw, Sparkles, X } from "lucide-react";
 import { difficulties, difficultyOrder, formatCountdown, formatDuration } from "./config";
 import { themes } from "./themes";
@@ -28,7 +29,6 @@ function isLegendDifficulty(difficulty: Difficulty) {
 }
 
 export function GameClient() {
-  const router = useRouter();
   const searchParams = useSearchParams();
   const { ready, headers, authError } = usePlayer();
   const [session, setSession] = useState<GameSessionView | null>(null);
@@ -36,6 +36,8 @@ export function GameClient() {
   const [guessSlots, setGuessSlots] = useState<Array<string | null>>([]);
   const [selectedObjectId, setSelectedObjectId] = useState<string | null>(null);
   const [lastResult, setLastResult] = useState<{ correctPositions: number; total: number } | null>(null);
+  const [completedRevealGuess, setCompletedRevealGuess] = useState<string[] | null>(null);
+  const [showBalloons, setShowBalloons] = useState(false);
   const [showOnboarding, setShowOnboarding] = useState(false);
   const [elapsed, setElapsed] = useState(0);
   const [dailyCountdown, setDailyCountdown] = useState(nextMidnightCountdown());
@@ -66,6 +68,8 @@ export function GameClient() {
       setLoading(true);
       setError("");
       setLastResult(null);
+      setCompletedRevealGuess(null);
+      setShowBalloons(false);
       const response = await fetch("/api/game/start", {
         method: "POST",
         headers: { "Content-Type": "application/json", ...headers },
@@ -106,6 +110,12 @@ export function GameClient() {
     const interval = window.setInterval(() => setDailyCountdown(nextMidnightCountdown()), 1000);
     return () => window.clearInterval(interval);
   }, []);
+
+  useEffect(() => {
+    if (!showBalloons) return;
+    const timeout = window.setTimeout(() => setShowBalloons(false), 10_000);
+    return () => window.clearTimeout(timeout);
+  }, [showBalloons]);
 
   const itemById = useMemo(() => new Map(session?.items.map((item) => [item.id, item]) ?? []), [session]);
   const filledGuess = guessSlots.every(Boolean);
@@ -166,6 +176,11 @@ export function GameClient() {
       createdAt: new Date().toISOString()
     };
     setLastResult({ correctPositions: result.correctPositions, total: arrangement.length });
+    if (result.completed) {
+      setCompletedRevealGuess(arrangement);
+      setGuessSlots(arrangement);
+      setShowBalloons(true);
+    }
     setSession((current) =>
       current
         ? {
@@ -184,7 +199,6 @@ export function GameClient() {
           const completedSession = await loadCompletedSession(session.id);
           setSession(completedSession);
           localStorage.setItem("hidden-order-last-session", JSON.stringify(completedSession));
-          router.push(`/results?session=${completedSession.id}`);
         } catch (loadError) {
           setError(loadError instanceof Error ? loadError.message : "Unable to load results.");
         } finally {
@@ -306,16 +320,37 @@ export function GameClient() {
           <div className="flex items-center justify-between gap-3">
             <div>
               <h2 className="text-xl font-black text-white">Hidden Order</h2>
-              <p className="mt-1 text-sm font-bold text-white/65">Build a guess to discover the hidden arrangement.</p>
+              <p className="mt-1 text-sm font-bold text-white/65">
+                {completedRevealGuess ? "Matched. The hidden order is revealed." : "Build a guess to discover the hidden arrangement."}
+              </p>
             </div>
-            <span className="rounded-full bg-white/10 px-3 py-2 text-sm font-black text-white">Locked</span>
+            <span className="rounded-full bg-white/10 px-3 py-2 text-sm font-black text-white">
+              {completedRevealGuess ? "Matched" : "Locked"}
+            </span>
           </div>
           <div className="mt-3 grid gap-2" style={{ gridTemplateColumns: `repeat(${columnsFor(session.items.length)}, minmax(0, 1fr))` }}>
-            {session.items.map((item, index) => (
-              <div key={`${item.id}-${index}`} className="grid aspect-square min-h-14 place-items-center rounded-[20px] border-2 border-white/15 bg-white/10 text-2xl font-black text-white">
-                ?
-              </div>
-            ))}
+            {session.items.map((item, index) => {
+              const revealedItem = completedRevealGuess ? itemById.get(completedRevealGuess[index]) : undefined;
+              return (
+                <div
+                  key={`${item.id}-${index}`}
+                  className={`grid aspect-square min-h-14 place-items-center rounded-[20px] border-2 text-center font-black ${
+                    revealedItem ? "border-mango bg-white text-ink shadow-soft" : "border-white/15 bg-white/10 text-2xl text-white"
+                  }`}
+                >
+                  {revealedItem ? (
+                    <>
+                      <span className="block text-3xl sm:text-4xl" aria-hidden>
+                        {revealedItem.icon}
+                      </span>
+                      <span className="mt-1 block text-[11px] leading-tight sm:text-xs">{revealedItem.label}</span>
+                    </>
+                  ) : (
+                    "?"
+                  )}
+                </div>
+              );
+            })}
           </div>
         </div>
 
@@ -419,6 +454,8 @@ export function GameClient() {
         {error ? <p className="mt-3 rounded-2xl bg-white px-4 py-3 font-bold text-berry">{error}</p> : null}
       </section>
 
+      {session.status === "completed" ? <CompletedActions session={session} /> : null}
+
       <section className="rounded-[30px] bg-white/85 p-5 shadow-soft">
         <div className="flex items-center justify-between">
           <h2 className="text-xl font-black">Attempts</h2>
@@ -437,10 +474,75 @@ export function GameClient() {
       {session.status === "completed" ? (
         <div className="fixed inset-x-4 bottom-4 mx-auto flex max-w-md items-center gap-3 rounded-[26px] bg-mango p-4 font-black text-ink shadow-pop">
           <Sparkles aria-hidden />
-          Solved! Opening results...
+          Matched! Choose your next move.
         </div>
       ) : null}
+
+      {showBalloons ? <CelebrationBalloons /> : null}
     </main>
+  );
+}
+
+function replayHref(session: GameSessionView) {
+  if (session.gameType === "stage") return `/game?mode=stage&stage=${session.stageNumber ?? 1}`;
+  return "/game?mode=practice";
+}
+
+function continueHref(session: GameSessionView) {
+  if (session.gameType === "stage" && session.stageNumber && session.stageNumber < 40) {
+    return `/game?mode=stage&stage=${session.stageNumber + 1}`;
+  }
+  if (session.gameType === "daily") return "/leaderboard";
+  return "/stages";
+}
+
+function continueLabel(session: GameSessionView) {
+  if (session.gameType === "stage" && session.stageNumber && session.stageNumber < 40) return "Continue";
+  if (session.gameType === "daily") return "View Leaderboard";
+  return "Stage Select";
+}
+
+function CompletedActions({ session }: { session: GameSessionView }) {
+  return (
+    <section className="rounded-[30px] bg-mango p-5 text-ink shadow-pop">
+      <p className="text-sm font-black uppercase tracking-wide text-ink/60">Perfect match</p>
+      <h2 className="mt-1 text-3xl font-black">You found the hidden order.</h2>
+      <div className="mt-4 grid gap-3 sm:grid-cols-2">
+        <Link href={replayHref(session)} className="rounded-[24px] bg-ink px-5 py-4 text-center font-black text-white shadow-pop">
+          Play Again
+        </Link>
+        <Link href={continueHref(session)} className="rounded-[24px] bg-white px-5 py-4 text-center font-black text-ink shadow-soft">
+          {continueLabel(session)}
+        </Link>
+      </div>
+    </section>
+  );
+}
+
+function CelebrationBalloons() {
+  const balloons = Array.from({ length: 18 }, (_, index) => ({
+    id: index,
+    left: `${6 + ((index * 17) % 88)}%`,
+    delay: `${(index % 6) * 0.28}s`,
+    duration: `${6.5 + (index % 5) * 0.55}s`,
+    color: ["#ffbf46", "#e83f6f", "#55d6be", "#2f80ed", "#8e6cff"][index % 5]
+  }));
+
+  return (
+    <div className="pointer-events-none fixed inset-0 z-40 overflow-hidden" aria-hidden>
+      {balloons.map((balloon) => (
+        <span
+          key={balloon.id}
+          className="celebration-balloon"
+          style={{
+            left: balloon.left,
+            animationDelay: balloon.delay,
+            animationDuration: balloon.duration,
+            backgroundColor: balloon.color
+          }}
+        />
+      ))}
+    </div>
   );
 }
 

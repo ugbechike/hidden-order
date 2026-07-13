@@ -18,7 +18,8 @@ async function fillGuess(page: import("@playwright/test").Page, target: string[]
 async function solveCurrentPuzzle(page: import("@playwright/test").Page, solution: string[]) {
   await fillGuess(page, solution);
   await page.getByRole("button", { name: /Submit Guess/i }).click({ force: true });
-  await expect(page).toHaveURL(/\/results/);
+  await expect(page.getByText("Perfect match")).toBeVisible();
+  await expect(page.getByRole("link", { name: "Play Again" })).toBeVisible();
 }
 
 test("starts and completes a stage", async ({ page }) => {
@@ -26,7 +27,8 @@ test("starts and completes a stage", async ({ page }) => {
   await page.goto("/game?mode=stage&stage=1");
   await expect(page.getByRole("heading", { name: "Stage 1" })).toBeVisible();
   await solveCurrentPuzzle(page, buildStageDefinition(1).solution);
-  await expect(page.getByText("Puzzle completed")).toBeVisible();
+  await expect(page).toHaveURL(/\/game/);
+  await expect(page.getByRole("link", { name: "Continue" })).toBeVisible();
 });
 
 test("records guesses and shows leaderboard", async ({ page }) => {
@@ -46,5 +48,5 @@ test("completes the daily puzzle", async ({ page }) => {
   await page.goto("/game?mode=daily");
   await expect(page.getByRole("heading", { name: "Daily Puzzle" })).toBeVisible();
   await solveCurrentPuzzle(page, buildDailyDefinition().solution);
-  await expect(page.getByText("Share Result")).toBeVisible();
+  await expect(page.getByRole("link", { name: "View Leaderboard" })).toBeVisible();
 });
