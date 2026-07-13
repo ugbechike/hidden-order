@@ -18,6 +18,7 @@ export async function POST(request: Request) {
     return NextResponse.json({
       result: {
         correctPositions: latestGuess?.correctPositions ?? 0,
+        totalPositions: input.arrangement.length,
         attemptNumber: session.attemptCount,
         completed: session.status === "completed"
       }

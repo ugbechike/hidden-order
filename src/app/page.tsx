@@ -17,7 +17,7 @@ export default function Home() {
         <p className="text-sm font-black uppercase tracking-wide text-mango">Deduction in disguise</p>
         <h1 className="mt-2 text-4xl font-black leading-none sm:text-5xl">Find the hidden order.</h1>
         <p className="mt-4 max-w-xl text-base font-semibold text-white/80">
-          Build a full guess, submit it, and learn only how many hidden positions you matched.
+          Swap the current arrangement, submit it, and use the latest clue to close in on the hidden order.
         </p>
       </section>
 
